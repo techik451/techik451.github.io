@@ -1,0 +1,23 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply bg-igf-cream text-igf-blue font-sans antialiased;
+}
+
+a {
+  @apply text-igf-blue hover:text-igf-gold transition-colors;
+}
+
+.section-title {
+  @apply text-3xl md:text-4xl font-semibold text-igf-blue;
+}
+
+.section-subtitle {
+  @apply text-lg text-igf-slate max-w-3xl;
+}
