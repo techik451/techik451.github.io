@@ -20,7 +20,7 @@ A modern, professional marketing site and admin dashboard for the Igiehon Founda
 
 2. **Configure Firebase**
 
-   Create a Firebase project with Firestore enabled and add a web app. Copy your Firebase config and add the keys to a `.env.local` file (not committed) or to Vercel environment variables.
+   Create a Firebase project with Firestore enabled and add a web app. Copy the `.env.example` file to `.env.local` and replace the placeholder values with your Firebase config. You can also add these keys to Vercel environment variables when deploying.
 
    ```bash
    NEXT_PUBLIC_FIREBASE_API_KEY=xxxx
