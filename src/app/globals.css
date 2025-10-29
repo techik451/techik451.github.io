@@ -7,17 +7,13 @@
 }
 
 body {
-  @apply bg-igf-cream text-igf-blue font-sans antialiased;
+  @apply font-sans bg-igf-cream text-igf-blue antialiased;
 }
 
 a {
-  @apply text-igf-blue hover:text-igf-gold transition-colors;
+  @apply text-inherit no-underline;
 }
 
-.section-title {
-  @apply text-3xl md:text-4xl font-semibold text-igf-blue;
-}
-
-.section-subtitle {
-  @apply text-lg text-igf-slate max-w-3xl;
+section {
+  @apply py-16 md:py-24;
 }

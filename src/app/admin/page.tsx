@@ -1,560 +1,149 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { InformationCircleIcon } from '@heroicons/react/24/outline';
-import { useContent } from '@/context/ContentContext';
-import type { SiteContent } from '@/types/content';
+import { useMemo, useState } from 'react';
+import { AdminLayout } from '@/components/admin/AdminLayout';
+import { AdminNav } from '@/components/admin/AdminNav';
+import { CollectionManager, type CollectionSchema } from '@/components/admin/CollectionManager';
+import {
+  fallbackEvents,
+  fallbackPartners,
+  fallbackPrograms,
+  fallbackStories,
+  type Event,
+  type Partner,
+  type Program,
+  type Story
+} from '@/lib/content';
+import type { FirestoreRecord } from '@/hooks/useFirestoreCollection';
 
-const fieldClass =
-  'w-full rounded-2xl border border-igf-blue/10 bg-white px-4 py-3 text-sm text-igf-blue focus:border-igf-blue focus:outline-none';
+const programSchema: CollectionSchema<Program> = {
+  title: 'Programs Library',
+  description: 'Curate the fellowships, accelerators, and community initiatives displayed on the home page.',
+  collectionPath: 'programs',
+  defaultValues: fallbackPrograms[0],
+  orderByField: 'name',
+  fields: [
+    { id: 'name', label: 'Program Title', type: 'text', placeholder: 'IMT Fellowship' },
+    {
+      id: 'description',
+      label: 'Program Summary',
+      type: 'textarea',
+      placeholder: 'Describe the program impact and who it serves.'
+    },
+    { id: 'image', label: 'Featured Image', type: 'text', placeholder: '/images/IMT2024Banner.webp' },
+    { id: 'theme', label: 'Program Theme', type: 'text', placeholder: 'technology' }
+  ]
+};
 
-export default function AdminDashboard() {
-  const { content, loading, error, saveContent } = useContent();
-  const [localContent, setLocalContent] = useState<SiteContent>(content);
-  const [status, setStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
-  const [statusMessage, setStatusMessage] = useState('');
+const storySchema: CollectionSchema<Story> = {
+  title: 'Impact Stories',
+  description: 'Showcase alumni quotes and achievements across continents.',
+  collectionPath: 'stories',
+  defaultValues: fallbackStories[0],
+  orderByField: 'title',
+  fields: [
+    { id: 'title', label: 'Story Title', type: 'text' },
+    {
+      id: 'summary',
+      label: 'Story Summary',
+      type: 'textarea',
+      placeholder: 'Explain the challenge and solution in 2-3 sentences.'
+    },
+    { id: 'quote', label: 'Quote', type: 'textarea', placeholder: 'A short quote to inspire visitors.' },
+    { id: 'author', label: 'Author', type: 'text', placeholder: 'Jane D., IMT Scholar' },
+    { id: 'image', label: 'Portrait Image', type: 'text', placeholder: '/images/students2-696x729.webp' }
+  ]
+};
 
-  useEffect(() => {
-    setLocalContent(content);
-  }, [content]);
+const eventSchema: CollectionSchema<Event> = {
+  title: 'Events & Deadlines',
+  description: 'Manage upcoming events, demo days, and application timelines.',
+  collectionPath: 'events',
+  defaultValues: fallbackEvents[0],
+  orderByField: 'date',
+  fields: [
+    { id: 'title', label: 'Event Name', type: 'text' },
+    { id: 'date', label: 'Event Date', type: 'date' },
+    { id: 'location', label: 'Location', type: 'text' },
+    { id: 'description', label: 'Event Description', type: 'textarea' },
+    { id: 'cta', label: 'Call to Action', type: 'text', placeholder: 'Reserve your seat' },
+    { id: 'image', label: 'Hero Image', type: 'text', placeholder: '/images/IMT24_1.jpg' }
+  ]
+};
 
-  const handleHeroChange = (field: keyof SiteContent['hero'], value: string) => {
-    setLocalContent((prev) => ({
-      ...prev,
-      hero: {
-        ...prev.hero,
-        [field]: value
-      }
-    }));
-  };
+const partnerSchema: CollectionSchema<Partner> = {
+  title: 'Partner Directory',
+  description: 'Recognise the organisations funding and co-creating with the foundation.',
+  collectionPath: 'partners',
+  defaultValues: fallbackPartners[0],
+  orderByField: 'name',
+  fields: [
+    { id: 'name', label: 'Partner Name', type: 'text' },
+    { id: 'logo', label: 'Logo URL', type: 'text', placeholder: '/images/edo-innovates.svg' }
+  ]
+};
 
-  const handleMissionPillarChange = (
-    index: number,
-    field: 'title' | 'description' | 'focusAreas',
-    value: string
-  ) => {
-    setLocalContent((prev) => {
-      const nextPillars = [...prev.mission.pillars];
-      const pillar = { ...nextPillars[index] };
-      if (field === 'focusAreas') {
-        pillar.focusAreas = value.split('\n').map((item) => item.trim()).filter(Boolean);
-      } else {
-        pillar[field] = value;
-      }
-      nextPillars[index] = pillar;
-      return {
-        ...prev,
-        mission: {
-          ...prev.mission,
-          pillars: nextPillars
-        }
-      };
-    });
-  };
+const fallbackProgramRecords: FirestoreRecord<Program>[] = fallbackPrograms.map((program) => ({ ...program, id: program.id }));
+const fallbackStoryRecords: FirestoreRecord<Story>[] = fallbackStories.map((story) => ({ ...story, id: story.id }));
+const fallbackEventRecords: FirestoreRecord<Event>[] = fallbackEvents.map((event) => ({ ...event, id: event.id }));
+const fallbackPartnerRecords: FirestoreRecord<Partner>[] = fallbackPartners.map((partner) => ({ ...partner, id: partner.id }));
 
-  const handleProgramChange = (
-    index: number,
-    field: 'title' | 'description' | 'focusAreas',
-    value: string
-  ) => {
-    setLocalContent((prev) => {
-      const programs = [...prev.programs.programs];
-      const program = { ...programs[index] };
-      if (field === 'focusAreas') {
-        program.focusAreas = value.split('\n').map((item) => item.trim()).filter(Boolean);
-      } else {
-        program[field] = value;
-      }
-      programs[index] = program;
-      return {
-        ...prev,
-        programs: {
-          ...prev.programs,
-          programs
-        }
-      };
-    });
-  };
+export default function AdminPage() {
+  const [activeSection, setActiveSection] = useState('dashboard');
 
-  const handleMetricChange = (index: number, field: 'label' | 'value', value: string) => {
-    setLocalContent((prev) => {
-      const metrics = [...prev.impact.metrics];
-      metrics[index] = { ...metrics[index], [field]: value };
-      return {
-        ...prev,
-        impact: {
-          ...prev.impact,
-          metrics
-        }
-      };
-    });
-  };
-
-  const handleTimelineChange = (index: number, field: 'year' | 'title' | 'description', value: string) => {
-    setLocalContent((prev) => {
-      const items = [...prev.timeline.items];
-      items[index] = { ...items[index], [field]: value };
-      return {
-        ...prev,
-        timeline: {
-          ...prev.timeline,
-          items
-        }
-      };
-    });
-  };
-
-  const handleTestimonialChange = (
-    index: number,
-    field: 'name' | 'role' | 'quote',
-    value: string
-  ) => {
-    setLocalContent((prev) => {
-      const testimonials = [...prev.testimonials.testimonials];
-      testimonials[index] = { ...testimonials[index], [field]: value };
-      return {
-        ...prev,
-        testimonials: {
-          ...prev.testimonials,
-          testimonials
-        }
-      };
-    });
-  };
-
-  const handlePartnerChange = (
-    index: number,
-    field: 'name' | 'description' | 'logoUrl',
-    value: string
-  ) => {
-    setLocalContent((prev) => {
-      const partners = [...prev.partners.partners];
-      partners[index] = { ...partners[index], [field]: value };
-      return {
-        ...prev,
-        partners: {
-          ...prev.partners,
-          partners
-        }
-      };
-    });
-  };
-
-  const handleSave = async () => {
-    setStatus('saving');
-    setStatusMessage('Saving updates…');
-    try {
-      await saveContent(localContent);
-      setStatus('success');
-      setStatusMessage('Content saved to Firestore.');
-    } catch (err) {
-      console.error(err);
-      setStatus('error');
-      setStatusMessage(
-        err instanceof Error ? err.message : 'Unable to save changes. Please check your Firebase configuration.'
-      );
+  const activeModule = useMemo(() => {
+    switch (activeSection) {
+      case 'programs':
+        return <CollectionManager schema={programSchema} fallbackItems={fallbackProgramRecords} />;
+      case 'stories':
+        return <CollectionManager schema={storySchema} fallbackItems={fallbackStoryRecords} />;
+      case 'events':
+        return <CollectionManager schema={eventSchema} fallbackItems={fallbackEventRecords} />;
+      case 'partners':
+        return <CollectionManager schema={partnerSchema} fallbackItems={fallbackPartnerRecords} />;
+      default:
+        return (
+          <div className="space-y-6 rounded-3xl border border-igf-blue/10 bg-white p-8 shadow">
+            <h2 className="text-3xl font-semibold text-igf-blue">Welcome back, team</h2>
+            <p className="text-sm text-igf-blue/70">
+              Use the navigation to update homepage programs, fellows&apos; stories, event schedules, and partner showcases. Content
+              syncs instantly across the website once published.
+            </p>
+            <ul className="grid gap-4 md:grid-cols-2">
+              <li className="rounded-3xl border border-igf-blue/10 bg-igf-cream/50 p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Programs</p>
+                <p className="mt-2 text-sm text-igf-blue">
+                  Curate fellowships and labs to keep our community informed about active opportunities.
+                </p>
+              </li>
+              <li className="rounded-3xl border border-igf-blue/10 bg-igf-cream/50 p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Stories</p>
+                <p className="mt-2 text-sm text-igf-blue">
+                  Elevate alumni voices and inspire the next cohort with wins and lessons learned.
+                </p>
+              </li>
+              <li className="rounded-3xl border border-igf-blue/10 bg-igf-cream/50 p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Events</p>
+                <p className="mt-2 text-sm text-igf-blue">
+                  Publish upcoming gatherings, application deadlines, and key milestones.
+                </p>
+              </li>
+              <li className="rounded-3xl border border-igf-blue/10 bg-igf-cream/50 p-6">
+                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Partners</p>
+                <p className="mt-2 text-sm text-igf-blue">
+                  Highlight new coalitions and celebrate the organisations investing alongside us.
+                </p>
+              </li>
+            </ul>
+          </div>
+        );
     }
-  };
+  }, [activeSection]);
 
   return (
-    <div className="min-h-screen bg-igf-cream">
-      <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
-        <div className="mb-10 flex flex-col gap-2">
-          <h1 className="text-3xl font-semibold text-igf-blue">Site content editor</h1>
-          <p className="text-sm text-igf-slate/80">
-            Update the website copy, hero media, program descriptions, and partner details. Press “Save changes” to publish to
-            Firestore instantly.
-          </p>
-          <div className="flex items-center gap-2 rounded-2xl bg-white/60 p-4 text-sm text-igf-blue">
-            <InformationCircleIcon className="h-5 w-5" />
-            <span>
-              {error
-                ? error
-                : 'Need Firebase? Create a Firestore database and add your NEXT_PUBLIC_FIREBASE_* keys in Vercel or a local .env file.'}
-            </span>
-          </div>
-        </div>
-
-        {loading ? (
-          <p className="text-sm text-igf-slate/70">Loading content…</p>
-        ) : (
-          <div className="grid gap-10">
-            <section className="rounded-3xl border border-igf-blue/10 bg-white p-6 shadow-lg shadow-igf-blue/5">
-              <h2 className="text-xl font-semibold text-igf-blue">Hero</h2>
-              <div className="mt-6 grid gap-4">
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Title</label>
-                  <input
-                    className={fieldClass}
-                    value={localContent.hero.title}
-                    onChange={(event) => handleHeroChange('title', event.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Subtitle</label>
-                  <textarea
-                    className={fieldClass}
-                    value={localContent.hero.subtitle}
-                    onChange={(event) => handleHeroChange('subtitle', event.target.value)}
-                    rows={3}
-                  />
-                </div>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <div className="md:col-span-1">
-                    <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Primary CTA</label>
-                    <input
-                      className={fieldClass}
-                      value={localContent.hero.ctaPrimary}
-                      onChange={(event) => handleHeroChange('ctaPrimary', event.target.value)}
-                    />
-                  </div>
-                  <div className="md:col-span-1">
-                    <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Secondary CTA</label>
-                    <input
-                      className={fieldClass}
-                      value={localContent.hero.ctaSecondary}
-                      onChange={(event) => handleHeroChange('ctaSecondary', event.target.value)}
-                    />
-                  </div>
-                  <div className="md:col-span-1">
-                    <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Background video URL</label>
-                    <input
-                      className={fieldClass}
-                      value={localContent.hero.backgroundVideoUrl}
-                      onChange={(event) => handleHeroChange('backgroundVideoUrl', event.target.value)}
-                    />
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-igf-blue/10 bg-white p-6 shadow-lg shadow-igf-blue/5">
-              <h2 className="text-xl font-semibold text-igf-blue">Mission</h2>
-              <div className="mt-6 grid gap-4">
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Section title</label>
-                  <input
-                    className={fieldClass}
-                    value={localContent.mission.title}
-                    onChange={(event) =>
-                      setLocalContent((prev) => ({
-                        ...prev,
-                        mission: { ...prev.mission, title: event.target.value }
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Description</label>
-                  <textarea
-                    className={fieldClass}
-                    value={localContent.mission.description}
-                    onChange={(event) =>
-                      setLocalContent((prev) => ({
-                        ...prev,
-                        mission: { ...prev.mission, description: event.target.value }
-                      }))
-                    }
-                    rows={3}
-                  />
-                </div>
-                <div className="grid gap-6 md:grid-cols-3">
-                  {localContent.mission.pillars.map((pillar, index) => (
-                    <div key={pillar.title} className="rounded-2xl border border-igf-blue/10 bg-igf-cream/40 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Pillar {index + 1}</p>
-                      <input
-                        className={`${fieldClass} mt-2`}
-                        value={pillar.title}
-                        onChange={(event) => handleMissionPillarChange(index, 'title', event.target.value)}
-                      />
-                      <textarea
-                        className={`${fieldClass} mt-3`}
-                        value={pillar.description}
-                        onChange={(event) => handleMissionPillarChange(index, 'description', event.target.value)}
-                        rows={3}
-                      />
-                      <textarea
-                        className={`${fieldClass} mt-3`}
-                        value={pillar.focusAreas.join('\n')}
-                        onChange={(event) => handleMissionPillarChange(index, 'focusAreas', event.target.value)}
-                        rows={3}
-                        placeholder={'Focus area per line'}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-igf-blue/10 bg-white p-6 shadow-lg shadow-igf-blue/5">
-              <h2 className="text-xl font-semibold text-igf-blue">Programs</h2>
-              <div className="mt-6 grid gap-4">
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Section title</label>
-                  <input
-                    className={fieldClass}
-                    value={localContent.programs.title}
-                    onChange={(event) =>
-                      setLocalContent((prev) => ({
-                        ...prev,
-                        programs: { ...prev.programs, title: event.target.value }
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Description</label>
-                  <textarea
-                    className={fieldClass}
-                    value={localContent.programs.description}
-                    onChange={(event) =>
-                      setLocalContent((prev) => ({
-                        ...prev,
-                        programs: { ...prev.programs, description: event.target.value }
-                      }))
-                    }
-                    rows={3}
-                  />
-                </div>
-                <div className="grid gap-6 md:grid-cols-3">
-                  {localContent.programs.programs.map((program, index) => (
-                    <div key={program.title} className="rounded-2xl border border-igf-blue/10 bg-igf-cream/40 p-4">
-                      <p className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Program {index + 1}</p>
-                      <input
-                        className={`${fieldClass} mt-2`}
-                        value={program.title}
-                        onChange={(event) => handleProgramChange(index, 'title', event.target.value)}
-                      />
-                      <textarea
-                        className={`${fieldClass} mt-3`}
-                        value={program.description}
-                        onChange={(event) => handleProgramChange(index, 'description', event.target.value)}
-                        rows={3}
-                      />
-                      <textarea
-                        className={`${fieldClass} mt-3`}
-                        value={program.focusAreas.join('\n')}
-                        onChange={(event) => handleProgramChange(index, 'focusAreas', event.target.value)}
-                        rows={3}
-                        placeholder={'Focus area per line'}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-igf-blue/10 bg-white p-6 shadow-lg shadow-igf-blue/5">
-              <h2 className="text-xl font-semibold text-igf-blue">Impact metrics</h2>
-              <div className="mt-6 grid gap-4">
-                {localContent.impact.metrics.map((metric, index) => (
-                  <div key={metric.label} className="grid gap-3 rounded-2xl border border-igf-blue/10 bg-igf-cream/40 p-4 md:grid-cols-2">
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Label</label>
-                      <input
-                        className={fieldClass}
-                        value={metric.label}
-                        onChange={(event) => handleMetricChange(index, 'label', event.target.value)}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Value</label>
-                      <input
-                        className={fieldClass}
-                        value={metric.value}
-                        onChange={(event) => handleMetricChange(index, 'value', event.target.value)}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-igf-blue/10 bg-white p-6 shadow-lg shadow-igf-blue/5">
-              <h2 className="text-xl font-semibold text-igf-blue">Timeline</h2>
-              <div className="mt-6 grid gap-4">
-                {localContent.timeline.items.map((item, index) => (
-                  <div key={`${item.year}-${index}`} className="grid gap-3 rounded-2xl border border-igf-blue/10 bg-igf-cream/40 p-4">
-                    <div className="grid gap-2 md:grid-cols-3">
-                      <div>
-                        <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Year</label>
-                        <input
-                          className={fieldClass}
-                          value={item.year}
-                          onChange={(event) => handleTimelineChange(index, 'year', event.target.value)}
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Title</label>
-                        <input
-                          className={fieldClass}
-                          value={item.title}
-                          onChange={(event) => handleTimelineChange(index, 'title', event.target.value)}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Description</label>
-                      <textarea
-                        className={fieldClass}
-                        value={item.description}
-                        onChange={(event) => handleTimelineChange(index, 'description', event.target.value)}
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-igf-blue/10 bg-white p-6 shadow-lg shadow-igf-blue/5">
-              <h2 className="text-xl font-semibold text-igf-blue">Testimonials</h2>
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                {localContent.testimonials.testimonials.map((testimonial, index) => (
-                  <div key={testimonial.name} className="rounded-2xl border border-igf-blue/10 bg-igf-cream/40 p-4">
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Name</label>
-                      <input
-                        className={fieldClass}
-                        value={testimonial.name}
-                        onChange={(event) => handleTestimonialChange(index, 'name', event.target.value)}
-                      />
-                    </div>
-                    <div className="mt-3">
-                      <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Role</label>
-                      <input
-                        className={fieldClass}
-                        value={testimonial.role}
-                        onChange={(event) => handleTestimonialChange(index, 'role', event.target.value)}
-                      />
-                    </div>
-                    <div className="mt-3">
-                      <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Quote</label>
-                      <textarea
-                        className={fieldClass}
-                        value={testimonial.quote}
-                        onChange={(event) => handleTestimonialChange(index, 'quote', event.target.value)}
-                        rows={3}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-igf-blue/10 bg-white p-6 shadow-lg shadow-igf-blue/5">
-              <h2 className="text-xl font-semibold text-igf-blue">Partners</h2>
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                {localContent.partners.partners.map((partner, index) => (
-                  <div key={partner.name} className="rounded-2xl border border-igf-blue/10 bg-igf-cream/40 p-4">
-                    <div>
-                      <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Name</label>
-                      <input
-                        className={fieldClass}
-                        value={partner.name}
-                        onChange={(event) => handlePartnerChange(index, 'name', event.target.value)}
-                      />
-                    </div>
-                    <div className="mt-3">
-                      <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Description</label>
-                      <textarea
-                        className={fieldClass}
-                        value={partner.description}
-                        onChange={(event) => handlePartnerChange(index, 'description', event.target.value)}
-                        rows={3}
-                      />
-                    </div>
-                    <div className="mt-3">
-                      <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Logo URL</label>
-                      <input
-                        className={fieldClass}
-                        value={partner.logoUrl}
-                        onChange={(event) => handlePartnerChange(index, 'logoUrl', event.target.value)}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            <section className="rounded-3xl border border-igf-blue/10 bg-white p-6 shadow-lg shadow-igf-blue/5">
-              <h2 className="text-xl font-semibold text-igf-blue">Call to action</h2>
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Headline</label>
-                  <input
-                    className={fieldClass}
-                    value={localContent.callToAction.title}
-                    onChange={(event) =>
-                      setLocalContent((prev) => ({
-                        ...prev,
-                        callToAction: { ...prev.callToAction, title: event.target.value }
-                      }))
-                    }
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Description</label>
-                  <textarea
-                    className={fieldClass}
-                    value={localContent.callToAction.description}
-                    onChange={(event) =>
-                      setLocalContent((prev) => ({
-                        ...prev,
-                        callToAction: { ...prev.callToAction, description: event.target.value }
-                      }))
-                    }
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Primary CTA label</label>
-                  <input
-                    className={fieldClass}
-                    value={localContent.callToAction.primaryCta}
-                    onChange={(event) =>
-                      setLocalContent((prev) => ({
-                        ...prev,
-                        callToAction: { ...prev.callToAction, primaryCta: event.target.value }
-                      }))
-                    }
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-blue/60">Secondary CTA label</label>
-                  <input
-                    className={fieldClass}
-                    value={localContent.callToAction.secondaryCta}
-                    onChange={(event) =>
-                      setLocalContent((prev) => ({
-                        ...prev,
-                        callToAction: { ...prev.callToAction, secondaryCta: event.target.value }
-                      }))
-                    }
-                  />
-                </div>
-              </div>
-            </section>
-          </div>
-        )}
-
-        <div className="sticky bottom-6 mt-12 flex items-center justify-between rounded-full border border-igf-blue/10 bg-white/90 px-6 py-4 shadow-2xl shadow-igf-blue/10 backdrop-blur">
-          <div className="text-sm text-igf-slate/80">
-            {status === 'idle' && 'Changes are not yet saved.'}
-            {status === 'saving' && statusMessage}
-            {status === 'success' && statusMessage}
-            {status === 'error' && <span className="text-red-500">{statusMessage}</span>}
-          </div>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={status === 'saving'}
-            className="rounded-full bg-igf-blue px-6 py-2 text-sm font-semibold text-white shadow-lg shadow-igf-blue/20 disabled:cursor-not-allowed disabled:bg-igf-blue/50"
-          >
-            {status === 'saving' ? 'Saving…' : 'Save changes'}
-          </button>
-        </div>
-      </div>
-    </div>
+    <AdminLayout>
+      <AdminNav activeSection={activeSection} onSelect={setActiveSection} />
+      {activeModule}
+    </AdminLayout>
   );
 }

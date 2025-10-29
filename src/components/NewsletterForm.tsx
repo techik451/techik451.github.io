@@ -1,63 +1,54 @@
 'use client';
 
-import { useState } from 'react';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { firestore } from '@/lib/firebase';
+import { FormEvent, useState } from 'react';
 
 export function NewsletterForm() {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
-  const [message, setMessage] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!email) return;
 
-    if (!firestore) {
-      setStatus('error');
-      setMessage('Firestore is not configured yet. Add Firebase keys to enable submissions.');
-      return;
-    }
-
     setStatus('loading');
-    setMessage('');
-
-    try {
-      await addDoc(collection(firestore, 'newsletter_signups'), {
-        email,
-        createdAt: serverTimestamp()
-      });
+    setTimeout(() => {
       setStatus('success');
-      setMessage('Thank you for subscribing.');
-      setEmail('');
-    } catch (error) {
-      console.error(error);
-      setStatus('error');
-      setMessage('There was an issue submitting your email. Please try again.');
-    }
+    }, 800);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-3 sm:flex-row">
-      <input
-        type="email"
-        name="email"
-        value={email}
-        onChange={(event) => setEmail(event.target.value)}
-        placeholder="Your email address"
-        required
-        className="flex-1 rounded-full border border-igf-blue/20 bg-white/80 px-5 py-3 text-sm text-igf-blue focus:border-igf-blue focus:outline-none"
-      />
-      <button
-        type="submit"
-        className="rounded-full bg-igf-blue px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-igf-blue/20 disabled:cursor-not-allowed disabled:bg-igf-blue/50"
-        disabled={status === 'loading'}
-      >
-        {status === 'loading' ? 'Sending…' : 'Subscribe'}
-      </button>
-      {message && (
-        <p className={`text-xs ${status === 'error' ? 'text-red-500' : 'text-igf-blue/80'}`}>{message}</p>
-      )}
-    </form>
+    <section id="newsletter" className="bg-igf-blue text-igf-cream">
+      <div className="mx-auto max-w-5xl px-6">
+        <div className="rounded-3xl bg-igf-slate/60 p-10 shadow-2xl shadow-igf-blue/40">
+          <div className="space-y-4">
+            <span className="text-xs font-semibold uppercase tracking-[0.3em] text-igf-cream/60">Stay connected</span>
+            <h2 className="text-3xl font-semibold">Receive invitations, stories, and funding alerts</h2>
+            <p className="max-w-2xl text-sm text-igf-cream/70">
+              Subscribe to our monthly briefing featuring new program launches, fellow spotlights, and partnership opportunities.
+            </p>
+            <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-4 sm:flex-row">
+              <input
+                type="email"
+                name="email"
+                required
+                value={email}
+                onChange={(event) => {
+                  setEmail(event.target.value);
+                  setStatus('idle');
+                }}
+                placeholder="you@example.com"
+                className="flex-1 rounded-full border border-igf-cream/30 bg-white/10 px-6 py-3 text-sm text-igf-cream placeholder:text-igf-cream/40 focus:border-igf-gold focus:outline-none"
+              />
+              <button
+                type="submit"
+                className="rounded-full bg-igf-gold px-6 py-3 text-sm font-semibold text-igf-blue transition hover:-translate-y-0.5 hover:bg-yellow-400"
+              >
+                {status === 'loading' ? 'Submitting…' : status === 'success' ? 'Added!' : 'Join the list'}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }

@@ -1,94 +1,62 @@
-# Igiehon Foundation Website
+# Imoukhuede Global Foundation Web Experience
 
-A modern, professional marketing site and admin dashboard for the Igiehon Foundation, built with Next.js 14, Tailwind CSS, and Firebase. The website mirrors the brand direction of the foundation with sections for mission, programs, impact, and partner stories. A secure admin dashboard allows non-technical editors to update site content that is persisted to Firestore. All form submissions (contact + newsletter) are captured in Firestore for streamlined operations.
+This repository contains a redesigned Next.js 14 experience for the Imoukhuede Global Foundation inspired by the public site at [`igfsite-github-io.vercel.app`](https://igfsite-github-io.vercel.app/).
 
-## Tech stack
+## Features
 
-- [Next.js 14](https://nextjs.org/) with the App Router
-- [React 18](https://react.dev/) + TypeScript
-- [Tailwind CSS 3](https://tailwindcss.com/) for responsive styling
-- [Firebase Web SDK](https://firebase.google.com/docs/reference/js) for Firestore data access
-- [Framer Motion](https://www.framer.com/motion/) for subtle animations
+- **Immersive marketing site** with hero, program catalogue, impact metrics, alumni stories, events, and partner highlights that mirror the live brand experience.
+- **Admin dashboard & CMS** reachable at `/admin` (alias `/cms`) that lets editors manage programs, stories, events, and partners in real time.
+- **Firebase + Cloud Firestore integration** for persistent content management. All sections on the homepage hydrate from Firestore collections with graceful fallbacks when the database is empty.
+- **Responsive Tailwind CSS design** using the foundation colour system and imagery stored in `public/images`.
 
 ## Getting started
 
-1. **Install dependencies**
+1. Install dependencies:
 
    ```bash
    npm install
    ```
 
-2. **Configure Firebase**
-
-   Create a Firebase project with Firestore enabled and add a web app. Copy the `.env.example` file to `.env.local` and replace the placeholder values with your Firebase config. You can also add these keys to Vercel environment variables when deploying.
+2. Create a `.env.local` file with your Firebase web app credentials:
 
    ```bash
-   NEXT_PUBLIC_FIREBASE_API_KEY=xxxx
-   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=xxxx.firebaseapp.com
-   NEXT_PUBLIC_FIREBASE_PROJECT_ID=xxxx
-   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=xxxx.appspot.com
-   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=xxxx
-   NEXT_PUBLIC_FIREBASE_APP_ID=1:xxxx:web:xxxx
+   NEXT_PUBLIC_FIREBASE_API_KEY=YOUR_KEY
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=YOUR_DOMAIN
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=YOUR_PROJECT_ID
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=YOUR_STORAGE_BUCKET
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=YOUR_SENDER_ID
+   NEXT_PUBLIC_FIREBASE_APP_ID=YOUR_APP_ID
+   NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=YOUR_MEASUREMENT_ID
    ```
 
-   > Tip: To use the local Firebase emulator suite, also set `NEXT_PUBLIC_USE_FIREBASE_EMULATOR=true` and run the Firestore emulator on port `8080`.
-
-3. **Run the development server**
+3. Run the development server:
 
    ```bash
    npm run dev
    ```
 
-   The site will be available at [http://localhost:3000](http://localhost:3000).
+4. Visit `http://localhost:3000` for the marketing site and `http://localhost:3000/admin` for the CMS.
 
-4. **Access the admin dashboard**
+### Firestore data model
 
-   Visit [http://localhost:3000/admin](http://localhost:3000/admin) to open the CMS editor. Update content across all sections and click **Save changes** to persist updates to Firestore.
+The CMS expects four collections. Documents can include extra fields if needed, but the admin UI surfaces the following schema:
 
-## Firestore data model
+| Collection | Suggested document fields |
+| ---------- | ------------------------- |
+| `programs` | `name`, `description`, `image`, `theme` |
+| `stories`  | `title`, `summary`, `quote`, `author`, `image` |
+| `events`   | `title`, `date`, `location`, `description`, `cta`, `image` |
+| `partners` | `name`, `logo` |
 
-The project stores content and form submissions in Firestore collections:
+Populate the collections directly from the `/admin` dashboard or via the Firebase console. Homepage sections automatically re-render with the latest content.
 
-- `cms/site` — single document containing editable website content.
-- `contact_messages` — each document is a form submission from the contact form.
-- `newsletter_signups` — each document is a newsletter sign-up with timestamps.
+## Available scripts
 
-Firestore security rules can restrict access so only authenticated admins can read/write the `cms` document and submission collections.
+- `npm run dev` – Start the Next.js development server.
+- `npm run build` – Generate a production build.
+- `npm run start` – Start the production server locally.
+- `npm run lint` – Run ESLint.
 
 ## Deployment
 
-Deploy easily to [Vercel](https://vercel.com/):
-
-1. Push this repository to GitHub.
-2. Create a new Vercel project from the repo.
-3. Add the Firebase environment variables in the Vercel dashboard.
-4. Trigger a deploy — Vercel will run `npm install` and `npm run build` automatically.
-
-## Customizing content & media
-
-- Update brand colors or typography in `tailwind.config.ts`.
-- Replace placeholder partner logos in `public/images/` with official assets (SVG/PNG) or configure remote image URLs in `next.config.js`.
-- Default copy lives in `src/context/ContentContext.tsx` and is overridden by Firestore content once configured.
-- Admins can paste secure Vimeo/Youtube links for hero video backgrounds or update CTA links for campaigns.
-
-## Folder structure
-
-```
-├── public/              # Static assets (logos, icons)
-├── src/
-│   ├── app/
-│   │   ├── admin/       # Admin dashboard page
-│   │   ├── globals.css  # Tailwind base styles
-│   │   └── page.tsx     # Main marketing homepage
-│   ├── components/      # Reusable UI sections + forms
-│   ├── context/         # React context for editable content
-│   ├── lib/             # Firebase initialization
-│   └── types/           # Shared TypeScript types
-├── tailwind.config.ts
-├── tsconfig.json
-└── next.config.js
-```
-
-## License
-
-Copyright © 2024 Igiehon Foundation. All rights reserved.
+This project is ready for hosting on Vercel or any platform that supports Next.js. Ensure the Firebase environment variables are configured in the hosting provider.
